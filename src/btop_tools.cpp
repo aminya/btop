@@ -165,28 +165,34 @@ namespace Term {
 	}
 
 	auto get_min_size(const string& boxes) -> array<int, 2> {
-		if (const auto row = Layout::horizontal_row(boxes))
-			return {Term::width, row->height + std::max(Proc::min_height * boxes.contains("proc"),
-				Mem::min_height * boxes.contains("mem") + Net::min_height * boxes.contains("net"))};
+		if (const auto row = Layout::horizontal_row(boxes)) {
+			const bool proc = boxes.contains("proc");
+			const bool ctr = boxes.contains("ctr");
+			const int proc_height = Proc::min_height * proc + Ctr::min_height * ctr;
+			const int memory_height = Mem::min_height * boxes.contains("mem") + Net::min_height * boxes.contains("net");
+			return {Term::width, row->height + std::max(proc_height, memory_height)};
+		}
         bool cpu = boxes.find("cpu") != string::npos;
         bool mem = boxes.find("mem") != string::npos;
         bool net = boxes.find("net") != string::npos;
         bool proc = boxes.find("proc") != string::npos;
+        bool ctr = boxes.find("ctr") != string::npos;
 	#ifdef GPU_SUPPORT
 		const auto gpu_ids = Layout::visible_gpus(boxes, Gpu::count);
 	#endif
         int width = 0;
 		if (mem) width = Mem::min_width;
 		else if (net) width = Mem::min_width;
-		width += (proc ? Proc::min_width : 0);
+		width += (proc ? Proc::min_width : ctr ? Ctr::min_width : 0);
 		if (cpu and width < Cpu::min_width) width = Cpu::min_width;
 	#ifdef GPU_SUPPORT
 		if (not gpu_ids.empty() and width < Gpu::min_width) width = Gpu::min_width;
 	#endif
 
 		int height = (cpu ? Cpu::min_height : 0);
-		if (proc) height += Proc::min_height;
-		else height += (mem ? Mem::min_height : 0) + (net ? Net::min_height : 0);
+		//? Container box shares a column with the proc box
+		if (proc) height += Proc::min_height + (ctr ? Ctr::min_height : 0);
+		else height += max((ctr ? Ctr::min_height : 0), (mem ? Mem::min_height : 0) + (net ? Net::min_height : 0));
 	#ifdef GPU_SUPPORT
 		for (const int id : gpu_ids)
 			height += Gpu::gpu_b_height_offsets.at(id) + 4;

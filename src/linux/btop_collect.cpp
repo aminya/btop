@@ -3129,6 +3129,7 @@ namespace Proc {
 	std::unordered_map<string, string> uid_user;
 	string current_sort;
 	string current_filter;
+	string current_ctr;
 	bool current_rev{};
 	bool is_tree_mode;
 
@@ -3265,8 +3266,11 @@ namespace Proc {
 		const auto pause_proc_list = Config::getB("pause_proc_list");
 		const auto mem_mode = (proc_swap_available() ? Config::getI("proc_mem_mode") : 0);
 		const size_t detailed_pid = Config::getI("detailed_pid");
-		bool should_filter = current_filter != filter;
-		if (should_filter) current_filter = filter;
+		bool should_filter = current_filter != filter or current_ctr != Ctr::selected;
+		if (should_filter) {
+			current_filter = filter;
+			current_ctr = Ctr::selected;
+		}
 		bool sorted_change = (sorting != current_sort or reverse != current_rev or should_filter);
 		bool tree_mode_change = tree != is_tree_mode;
 		if (sorted_change) {
@@ -3432,6 +3436,20 @@ namespace Proc {
 						new_proc.user = uid;
 					#endif
 					}
+
+					//? Get container from cgroup, cached like name and command so a process
+					//? moved to another cgroup after it was first seen keeps the old value
+					pread.open(d.path() / "cgroup");
+					while (getline(pread, line)) {
+						//? Format is "hierarchy-ID:controller-list:cgroup-path"
+						const auto path_pos = line.find(':', line.find(':') + 1);
+						if (path_pos == string::npos) continue;
+						if (const auto ctr = Ctr::parse_cgroup(std::string_view{line}.substr(path_pos + 1))) {
+							new_proc.container = ctr->path;
+							break;
+						}
+					}
+					pread.close();
 				}
 
 				//? Parse /proc/[pid]/stat
@@ -3627,6 +3645,9 @@ namespace Proc {
 
 			old_cputimes = cputimes;
 			old_uptime = uptime;
+
+			//? Containers are collected before the tree view adds resources of children to their parents
+			if (Ctr::shown) Ctr::collect(current_procs);
 		}
 		//* ---------------------------------------------Collection done-----------------------------------------------
 
@@ -3634,13 +3655,9 @@ namespace Proc {
 		if (should_filter) {
 			filter_found = 0;
 			for (auto& p : current_procs) {
-				if (not tree and not filter.empty()) {
-					if (!matches_filter(p, filter)) {
-						p.filtered = true;
-						filter_found++;
-					} else {
-						p.filtered = false;
-					}
+				if (not tree and (ctr_hidden(p) or (not filter.empty() and not matches_filter(p, filter)))) {
+					p.filtered = true;
+					filter_found++;
 				} else {
 					p.filtered = false;
 				}

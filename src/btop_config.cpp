@@ -50,7 +50,7 @@ using namespace Tools;
 const vector<string> Config::valid_graph_symbols = { "braille", "block", "tty" };
 const vector<string> Config::valid_graph_symbols_def = { "default", "braille", "block", "tty" };
 const vector<string> Config::valid_boxes = {
-	"cpu", "mem", "net", "proc", "sensors"
+	"cpu", "mem", "net", "proc", "sensors", "ctr"
 #ifdef GPU_SUPPORT
 	,"gpu0", "gpu1", "gpu2", "gpu3", "gpu4", "gpu5"
 #endif
@@ -118,7 +118,7 @@ namespace Config {
 
 		{"graph_symbol_proc", 	"# Graph symbol to use for graphs in cpu box, \"default\", \"braille\", \"block\" or \"tty\"."},
 
-		{"shown_boxes", 		"#* Manually set which boxes to show. Available values are \"cpu mem net proc\" and \"gpu0\" through \"gpu5\", separate values with whitespace."},
+		{"shown_boxes", 		"#* Manually set which boxes to show. Available values are \"cpu mem net proc ctr\" and \"gpu0\" through \"gpu5\", separate values with whitespace."},
 
 		{"update_ms", 			"#* Update time in milliseconds, recommended 2000 ms or above for better sample times for graphs."},
 
@@ -150,6 +150,8 @@ namespace Config {
 
 		{"proc_cmd_strip",		"#* Extended regex of text to remove from the shown process commands, e.g. \"/nix/store/[^/]+/\" for NixOS.\n"
 								"#* Only affects the command column, filtering still uses the full command. Empty string to disable."},
+
+		{"proc_filter_containers",  "#* (Linux) Hide processes running in containers (docker, podman, kubernetes, lxc, systemd-nspawn...) from the process list."},
 
 		{"proc_follow_detailed",	"#* Should the process list follow the selected process when detailed view is open."},
 
@@ -337,6 +339,7 @@ namespace Config {
 		{"proc_info_smaps", false},
 		{"proc_left", false},
 		{"proc_filter_kernel", false},
+		{"proc_filter_containers", false},
 		{"cpu_invert_lower", true},
 		{"cpu_single_graph", false},
 		{"cpu_bottom", false},
@@ -502,7 +505,7 @@ namespace Config {
 					validError = "Malformatted preset in config value presets!";
 					return false;
 				}
-				if (not is_in(vals.at(0), "cpu", "mem", "net", "proc", "gpu0", "gpu1", "gpu2", "gpu3", "gpu4", "gpu5")) {
+				if (not is_in(vals.at(0), "cpu", "mem", "net", "proc", "ctr", "gpu0", "gpu1", "gpu2", "gpu3", "gpu4", "gpu5")) {
 					validError = "Invalid box name in config value presets!";
 					return false;
 				}
@@ -548,7 +551,7 @@ namespace Config {
 			}
 			if (vals.at(0).starts_with("gpu")) {
 				set("graph_symbol_gpu", vals.at(2));
-			} else {
+			} else if (vals.at(0) != "ctr") { //? Container box uses the graph symbol of the proc box
 				set(strings.find("graph_symbol_" + vals.at(0))->first, vals.at(2));
 			}
 		}

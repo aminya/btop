@@ -1380,7 +1380,7 @@ graph_symbol_net = "default"
 # Graph symbol to use for graphs in cpu box, "default", "braille", "block" or "tty".
 graph_symbol_proc = "default"
 
-#* Manually set which boxes to show. Available values are "cpu mem net proc sensors" and "gpu0" through "gpu5", separate values with whitespace.
+#* Manually set which boxes to show. Available values are "cpu mem net proc sensors ctr" and "gpu0" through "gpu5", separate values with whitespace.
 shown_boxes = "cpu mem net proc"
 
 #* Update time in milliseconds, recommended 2000 ms or above for better sample times for graphs.
@@ -1423,6 +1423,9 @@ proc_filter_kernel = false
 #* Extended regex of text to remove from the shown process commands, e.g. "/nix/store/[^/]+/" for NixOS.
 #* Only affects the command column, filtering still uses the full command. Empty string to disable.
 proc_cmd_strip = ""
+
+#* (Linux) Hide processes running in containers (docker, podman, kubernetes, lxc, systemd-nspawn...) from the process list.
+proc_filter_containers = false
 
 #* Should the process list follow the selected process when detailed view is open.
 proc_follow_detailed = true
