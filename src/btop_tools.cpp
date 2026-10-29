@@ -795,6 +795,7 @@ const string Fx::us = e + "29m";	//* Strike/crossed-out on/off
 
 //* Reset foreground/background color and text effects
 const string Fx::reset_base = e + "0m";
+string Fx::reset = reset_base;
 
 //* Regex for matching color, style and cursor move escape sequences
 const std::regex Fx::escape_regex("\033\\[\\d+;?\\d?;?\\d*;?\\d*;?\\d*(m|f|s|u|C|D|A|B){1}");

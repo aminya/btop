@@ -37,8 +37,6 @@ using namespace Tools;
 namespace fs = std::filesystem;
 
 string Term::fg, Term::bg;
-string Fx::reset = reset_base;
-
 namespace Theme {
 
 	fs::path theme_dir;
