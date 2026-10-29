@@ -481,6 +481,7 @@ namespace Ctr {
 		static uint64_t old_time{};
 		const uint64_t now = time_micros();
 		const auto per_core = Config::getB("proc_per_core");
+		const auto old_count = current_ctrs.size();
 
 		//? Group processes by container, sum of process values is used for containers without readable cgroup stats
 		for (auto& c : current_ctrs) {
@@ -552,6 +553,7 @@ namespace Ctr {
 		}
 
 		old_time = now;
+		if (current_ctrs.size() != old_count) Global::resized = true;
 	}
 }
 

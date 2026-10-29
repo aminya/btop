@@ -2914,7 +2914,9 @@ namespace Draw {
 				Ctr::x = x;
 				Ctr::y = y;
 				Ctr::width = width;
-				Ctr::height = Proc::shown ? clamp(height / 3, Ctr::min_height, max(Ctr::min_height, height - min_height)) : height;
+				const int max_height = std::max(Ctr::min_height, height - (Proc::shown ? Proc::min_height : 0));
+				const auto visible_rows = std::min(Ctr::current_ctrs.size(), static_cast<size_t>(max_height - 3));
+				Ctr::height = std::max(Ctr::min_height, static_cast<int>(visible_rows) + 3);
 				y += Ctr::height;
 				height -= Ctr::height;
 				Ctr::box = createBox(Ctr::x, Ctr::y, Ctr::width, Ctr::height, Theme::c("proc_box"), true)
