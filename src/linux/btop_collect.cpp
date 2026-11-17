@@ -3148,6 +3148,14 @@ namespace Proc {
 			if (p_entry != procs.end()) detailed.parent = p_entry->name;
 		}
 
+		//? Get current working directory
+		std::error_code ec;
+		const auto cwd = fs::read_symlink(pid_path / "cwd", ec);
+		if (not ec)
+			detailed.cwd = cwd.string();
+		else
+			detailed.cwd.clear();
+
 		//? Expand process status from single char to explanative string
 		detailed.status = (proc_states.contains(detailed.entry.state)) ? proc_states.at(detailed.entry.state) : "Unknown";
 
@@ -3559,6 +3567,7 @@ namespace Proc {
 			}
 			else if (show_detailed and not got_detailed and detailed.status != "Dead") {
 				detailed.status = "Dead";
+				detailed.cwd.clear();
 				redraw = true;
 			}
 
